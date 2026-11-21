@@ -1,0 +1,13 @@
+{
+  "about": "Questions of the kinds agents answer by hand about checks: which checks exist and where each is defined, what they cost, which overlap, which instructions call for a run. They are put to the fixture in bench/fixture/guild, a small package with a two-workflow CI, a pre-push hook, a CONTRIBUTING line and a JUnit report (the file .ask-kit-checks-root makes the kit read it as a repository of its own). Paths are relative, so run the bench from the kit's folder. Expectations were checked against the fixture's files and the scripts' output on 2026-11-21. Questions about CI run history need a repository on GitHub and are not in the bench.",
+  "questions": [
+    { "id": "ci-matrix", "q": "In bench/fixture/guild, which operating systems and Node versions does the test job of the ci workflow run on, and what command does it run?", "expect": ["ubuntu", "macos", "20", "22", "npm test"] },
+    { "id": "same-command", "q": "In bench/fixture/guild, do two CI workflows run the same check command? Which workflows and which command?", "expect": ["npm test", "ci\\.yml", "release\\.yml"] },
+    { "id": "hooks", "q": "Which git hooks does bench/fixture/guild define, and what does each run?", "expect": ["pre-push", "npm test"] },
+    { "id": "asked-make-test", "q": "Which line of bench/fixture/guild/CONTRIBUTING.md tells a session to run make test, and is the same test also run elsewhere?", "expect": ["CONTRIBUTING\\.md:5", "ci\\.yml|pre-push"] },
+    { "id": "slowest-test", "q": "In bench/fixture/guild, which test was slowest in test-results/junit.xml and how long did it take?", "expect": ["reconciles the Thieves Guild accounts", "11\\.37"] },
+    { "id": "overlaps-shot", "do": "overlaps", "params": { "folder": "bench/fixture/guild", "user": false }, "expect": ["npm test", "release\\.yml", "ci\\.yml", "pre-push"] },
+    { "id": "inventory-shot", "do": "inventory", "params": { "folder": "bench/fixture/guild", "user": false }, "expect": ["pre-push", "ci\\.yml", "release\\.yml"] },
+    { "id": "timings-shot", "do": "timings", "params": { "folder": "bench/fixture/guild" }, "expect": ["junit\\.xml", "Thieves Guild", "11\\.37"] }
+  ]
+}

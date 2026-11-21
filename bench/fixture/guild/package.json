@@ -1,0 +1,10 @@
+{
+  "name": "guild-ledger",
+  "private": true,
+  "type": "module",
+  "description": "A fixture for the checks kit's bench: a small package with the same test command in CI, a pre-push hook and a CONTRIBUTING line.",
+  "scripts": {
+    "test": "node --test",
+    "lint": "node lint.mjs"
+  }
+}

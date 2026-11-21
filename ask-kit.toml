@@ -1,0 +1,41 @@
+id = "temet.checks"
+name = "checks"
+version = "0.1.0"
+min_ask_kit = "0.2.0"
+requires = ["git"]
+says = "what a repository's verification work costs and what it has caught, so the checks that cost more than they find can be cut: which checks exist and where each is defined (test suites, lint, typecheck, format, pre-commit and pre-push hooks, Husky, lefthook, Claude Code hooks, CI jobs and steps, package scripts, Makefile targets, check commands that AGENTS.md, CLAUDE.md, rules, agents and skills tell a session to run), how long each takes in CI and which tests are slowest, how often each has failed and on what, which jobs never failed in the last runs, which checks overlap (the same command under a hook, CI and an instruction), which instructions tell sessions to run something large or repeatedly; and acting on it (remove or merge a duplicated check, narrow a hook to changed files, delete or shorten an instruction line that calls for a redundant run)"
+keywords = ["slow (ci|tests?|checks?|gates?|hooks?|jobs?)", "ci (time|minutes|cost|jobs?|checks?|steps?)", "never fail\\w*", "pre-?commit", "pre-?push", "husky", "lefthook", "git hooks?", "which checks?", "redundant (checks?|tests?|hooks?|gates?)", "duplicate (checks?|ci|hooks?)", "slowest tests?", "check cost", "(tests?|hooks?|checks?|gates?)( and \\w+)? cost", "cost of (the |our )?(tests?|checks?|ci|hooks?)", "flaky (in|on|across) (ci|the last)", "how long (does|do) .* take in ci", "waiting on (tests?|ci|checks?)", "tests? (cost|take)"]
+route_hint = "which checks a repository has, how long they take in CI, how often they fail, which never fail, which are redundant, which tests are flaky across CI runs, what tests and hooks cost, and cutting, merging or narrowing them are checks; running the tests, lint, typecheck or build, reading one run's output, and whether a test is flaky over repeated local runs are tests (rust for a Rust workspace); finding and consolidating the text of rules (what rules exist, how many, duplicates, stale ones) is rules; why one CI run failed, or a pull request, is github; hooks as configured in Claude Code settings (what each event does, which hook blocked a call) are claude-setup; what sessions ran and how long they waited is mike; a repository's own code is code"
+cite = "`path:line` for a check or instruction line; `workflow / job` for CI; the run id and the date for a measured failure"
+instructions = "instructions.md"
+state_key = "${CHECKS_ROOT}"
+acts = ["repo.edit", "repo.write", "repo.run"]
+
+[[settings]]
+key = "CHECKS_ROOT"
+about = "the repository to answer about; found from the folder the agent works in"
+detect = ["sh", "-c", "git rev-parse --show-toplevel 2>/dev/null || pwd"]
+
+[[sources]]
+kind = "module"
+name = "checks"
+module = "checks.mjs"
+api = "api.d.ts"
+
+[[sources]]
+kind = "folder"
+name = "repo"
+path = "${CHECKS_ROOT}"
+about = "the repository: search, read and (when the ask may change things) edit its workflows, hooks, scripts and instruction files"
+# What the investigator reads goes to a model: credentials, dependencies and build output are never searched or read.
+exclude = [
+  ".env", ".env.*", "*.env", ".env*", ".npmrc", ".netrc", ".pypirc", "*.pem", "*.key", "*.p12", "*token*", "*secret*", "*credential*", "id_rsa*", "id_ed25519*", "auth.json", "*.sqlite*", "*.db",
+  "node_modules/**", "**/node_modules/**", "target/**", "**/target/**", "dist/**", "build/**", ".venv/**", "**/__pycache__/**", ".fastembed_cache/**", ".infinity_cache/**", ".playwright-mcp/**",
+  ".claude/worktrees/**", ".git/**",
+]
+
+[[roles]]
+name = "auditor"
+when = "a request to audit a repository's checks, find what costs more than it catches, or cut, merge, narrow or shorten checks and the instructions that call for them"
+patterns = ["\\b(audit|cut|trim|prune|reduce|remove|merge|narrow|shorten)\\b.*\\b(checks?|tests?|gates?|hooks?|ci|workflows?|lint)\\b", "\\bcosts? more than\\b", "\\b(redundant|duplicate)\\b.*\\b(checks?|tests?|ci)\\b"]
+instructions = "roles/auditor.md"

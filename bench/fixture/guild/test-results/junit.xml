@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="guild-ledger" tests="4" failures="0" time="14.82">
+  <testsuite name="ledger" tests="4" failures="0" time="14.82">
+    <testcase classname="ledger" name="sorts entries by guild name" time="0.04"/>
+    <testcase classname="ledger" name="adds the Seamstresses Guild" time="0.11"/>
+    <testcase classname="ledger" name="reconciles the Thieves Guild accounts" time="11.37"/>
+    <testcase classname="ledger" name="rejects an unsigned entry" time="3.30"/>
+  </testsuite>
+</testsuites>

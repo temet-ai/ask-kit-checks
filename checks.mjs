@@ -41,9 +41,9 @@ export function make({ settings, push, cwd, act }) {
     if (repos.has(root)) return repos.get(root);
     const git = (args) => run("git", args, root);
     const ctx = makeCtx(root, git);
-    const defs = await definitions(ctx);
+    const [defs, remoteRes] = await Promise.all([definitions(ctx), marked ? null : git(["remote", "get-url", "origin"])]);
     const expand = expander(ctx, defs);
-    const remote = marked ? "" : (await git(["remote", "get-url", "origin"])).out.trim().replace(/\/\/[^@/]*@/, "//");
+    const remote = marked ? "" : remoteRes.out.trim().replace(/\/\/[^@/]*@/, "//");
     const r = { root, ctx, defs, expand, remote, gh: makeGh(root), cache: {} };
     repos.set(root, r);
     return r;
@@ -51,7 +51,7 @@ export function make({ settings, push, cwd, act }) {
   const memo = async (r, k, f) => (r.cache[k] ??= await f());
 
   const collectAll = (r, o = {}) => memo(r, `all:${!!o.user}`, async () => {
-    const [h, c, ci, ins] = [await gitHooks(r.ctx, r.expand), claudeHooks(r.ctx, r.expand, { user: o.user !== false }), await ciWorkflows(r.ctx, r.expand), await instructionLines(r.ctx, r.expand, { user: !!o.userInstructions })];
+    const [h, c, ci, ins] = await Promise.all([gitHooks(r.ctx, r.expand), claudeHooks(r.ctx, r.expand, { user: o.user !== false }), ciWorkflows(r.ctx, r.expand), instructionLines(r.ctx, r.expand, { user: !!o.userInstructions })]);
     return { h, c, ci, ins };
   });
 
@@ -159,8 +159,9 @@ export function make({ settings, push, cwd, act }) {
       const never = rows.filter((j) => j.fail === 0).sort((a, b) => (median(b.secs) ?? 0) - (median(a.secs) ?? 0));
       const newest = failing.flatMap((j) => j.failures.map((f) => ({ ...f, workflow: j.workflow, job: j.job }))).sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
       const wantLogs = Math.min(o.logs ?? 3, 6);
-      const seen = new Set(), details = [];
-      for (const f of newest) { if (details.length >= wantLogs) break; if (seen.has(f.run)) continue; seen.add(f.run); const x = await failureDetail(r.gh, f.run); details.push({ ...x, workflow: f.workflow, at: f.at }); }
+      const seen = new Set(), picked = [];
+      for (const f of newest) { if (picked.length >= wantLogs) break; if (seen.has(f.run)) continue; seen.add(f.run); picked.push(f); }
+      const details = await Promise.all(picked.map(async (f) => ({ ...(await failureDetail(r.gh, f.run)), workflow: f.workflow, at: f.at })));
       const c1 = cap(failing, o.max ?? 15), c2 = cap(never, o.max ?? 15);
       return {
         folder: r.root, source: `gh run list + gh run view --json jobs over ${d.completed} completed runs from ${d.from} to ${d.to}; failing tests from gh run view --log-failed for the ${details.length} newest failed runs`,

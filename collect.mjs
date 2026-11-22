@@ -130,8 +130,7 @@ const entry = (ctx, expand, trigger, where, command, extra = {}) => {
 /** Git hooks: core.hooksPath, .git/hooks, .husky, .githooks, lefthook, pre-commit. */
 export async function gitHooks(ctx, expand) {
   const entries = [], notes = [], seen = new Set();
-  const hp = await ctx.git(["config", "--get", "core.hooksPath"]);
-  const gp = await ctx.git(["rev-parse", "--git-path", "hooks"]);
+  const [hp, gp] = await Promise.all([ctx.git(["config", "--get", "core.hooksPath"]), ctx.git(["rev-parse", "--git-path", "hooks"])]);
   const dirs = [];
   if (hp.code === 0 && hp.out.trim()) { const d = path.resolve(ctx.root, hp.out.trim().replace(/^~/, os.homedir())); dirs.push([d, "core.hooksPath"]); notes.push(`core.hooksPath = ${hp.out.trim()}`); }
   if (gp.code === 0) dirs.push([path.resolve(ctx.root, gp.out.trim()), ".git/hooks"]);
